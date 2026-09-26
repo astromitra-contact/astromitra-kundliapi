@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const env = require('./config/env');
 const kundliRoutes = require('./routes/kundli.routes');
 const chatRoutes = require('./routes/chat.routes');
+const horoscopeRoutes = require('./routes/horoscope.routes');
 const adminRoutes = require('./routes/admin/admin.routes');
 const { errorHandler, notFoundHandler } = require('./utils/errorHandler');
 
@@ -35,6 +36,7 @@ function createApp() {
 
   app.use('/api/kundli', kundliRoutes);
   app.use('/api/chat', chatRoutes);
+  app.use('/api/horoscope', horoscopeRoutes);
   // Admin routes are NOT reachable through the public Kundli/Chat surface
   // — separate router, separate base path, separate JWT auth middleware
   // (see middleware/adminAuth.middleware.js) applied inside admin.routes.js
