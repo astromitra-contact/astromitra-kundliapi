@@ -458,8 +458,15 @@ async function getDailyHoroscope({ sign, kundliId, date }) {
   // 2. Resolve sign metadata
   const signMeta = findSign(sign || userMoonRashi || 'Aries');
 
+  // Personalized badge only applies when viewing the user's OWN Janma Rashi (Moon sign)
+  const isSignPersonalized = Boolean(
+    kundliId &&
+    userMoonRashi &&
+    userMoonRashi.toLowerCase() === signMeta.english.toLowerCase()
+  );
+
   // Check cache
-  const cacheKey = `horoscope:${dateStr}:${signMeta.english.toLowerCase()}:${kundliId || 'general'}`;
+  const cacheKey = `horoscope:${dateStr}:${signMeta.english.toLowerCase()}:${isSignPersonalized ? kundliId : 'general'}`;
   if (horoscopeCache.has(cacheKey)) {
     return horoscopeCache.get(cacheKey);
   }
@@ -508,10 +515,10 @@ async function getDailyHoroscope({ sign, kundliId, date }) {
     quality: signMeta.quality,
     rashiLord: signMeta.lord,
     dates: signMeta.dates,
-    isPersonalized,
-    userName,
+    isPersonalized: isSignPersonalized,
+    userName: isSignPersonalized ? userName : null,
     userMoonRashi,
-    userLagna,
+    userLagna: isSignPersonalized ? userLagna : null,
     theme: (aiReading && aiReading.theme) || vedicReading.theme,
     overview: (aiReading && aiReading.overview) || vedicReading.overview,
     love: (aiReading && aiReading.love) || vedicReading.love,
