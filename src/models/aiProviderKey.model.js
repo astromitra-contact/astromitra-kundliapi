@@ -44,5 +44,6 @@ const aiProviderKeySchema = new mongoose.Schema(
 );
 
 aiProviderKeySchema.index({ provider: 1, active: 1, priority: 1 });
+aiProviderKeySchema.index({ active: 1, priority: 1 });
 
 module.exports = mongoose.model('AiProviderKey', aiProviderKeySchema);

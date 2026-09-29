@@ -127,10 +127,38 @@ async function getUsableKeysForProvider(provider) {
 
   return docs.map((doc) => ({
     id: String(doc._id),
+    provider: doc.provider,
     model: doc.model,
+    priority: doc.priority,
     rawKey: cryptoUtil.decrypt(doc.encryptedKey),
   }));
 }
+
+/**
+ * Global priority candidate keys across all providers with decrypted raw key.
+ * Ordered by priority ascending (1 = tried first), then createdAt ascending.
+ * Filters out inactive or currently cooling-down keys.
+ */
+async function getAllUsableKeys() {
+  if (!isMongoReady() || !env.ENCRYPTION_ENABLED) return [];
+
+  const now = new Date();
+  const docs = await AiProviderKey.find({
+    active: true,
+    $or: [{ cooldownUntil: null }, { cooldownUntil: { $lte: now } }],
+  })
+    .sort({ priority: 1, createdAt: 1 })
+    .lean();
+
+  return docs.map((doc) => ({
+    id: String(doc._id),
+    provider: doc.provider,
+    model: doc.model,
+    priority: doc.priority,
+    rawKey: cryptoUtil.decrypt(doc.encryptedKey),
+  }));
+}
+
 
 /** Record a successful use — clears any cooldown/failure streak. */
 async function recordSuccess(id) {
@@ -204,8 +232,8 @@ async function seedFromEnvIfEmpty() {
     // eslint-disable-next-line no-console
     console.warn(
       `[aiProviderKey.service] Migrated ${seed.provider.toUpperCase()}_API_KEY from .env into an encrypted ` +
-        `MongoDB record. You can now remove ${seed.provider.toUpperCase()}_API_KEY from .env — manage this ` +
-        'key (and add more) via the admin API from now on.'
+      `MongoDB record. You can now remove ${seed.provider.toUpperCase()}_API_KEY from .env — manage this ` +
+      'key (and add more) via the admin API from now on.'
     );
   }
 }
@@ -216,6 +244,7 @@ module.exports = {
   updateKey,
   deleteKey,
   getUsableKeysForProvider,
+  getAllUsableKeys,
   recordSuccess,
   recordFailure,
   seedFromEnvIfEmpty,
