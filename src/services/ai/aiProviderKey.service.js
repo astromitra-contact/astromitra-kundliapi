@@ -181,8 +181,9 @@ async function recordFailure(id, classification, reasonText) {
   if (!doc) return;
 
   const consecutiveFailures = (doc.consecutiveFailures || 0) + 1;
-  // Escalating cooldown: 1 min, 5 min, 15 min, capped at 30 min.
-  const cooldownMinutes = isPermanent ? 0 : Math.min(30, [1, 5, 15][Math.min(consecutiveFailures - 1, 2)] || 30);
+  // Fast cooldown for rate limits & transient traffic spikes: 15s, 30s, capped at 60s.
+  // Provider rate-limit windows (RPM) reset every 60 seconds.
+  const cooldownSeconds = isPermanent ? 0 : Math.min(60, [15, 30, 60][Math.min(consecutiveFailures - 1, 2)] || 60);
 
   await AiProviderKey.findByIdAndUpdate(id, {
     $set: {
@@ -190,7 +191,7 @@ async function recordFailure(id, classification, reasonText) {
       lastFailureAt: new Date(),
       lastFailureReason: `${classification}: ${reasonText || ''}`.slice(0, 500),
       consecutiveFailures,
-      cooldownUntil: isPermanent ? null : new Date(Date.now() + cooldownMinutes * 60 * 1000),
+      cooldownUntil: isPermanent ? null : new Date(Date.now() + cooldownSeconds * 1000),
       ...(isPermanent ? { active: false, invalidatedAt: new Date() } : {}),
     },
     $inc: { totalFailureCount: 1 },

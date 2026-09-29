@@ -56,7 +56,7 @@ async function tryAllProviders(promptText) {
   console.error('[keyRotation] All AI providers/keys failed:', failureSummary.join(' | ') || '(no active keys configured)');
 
   throw new AppError(
-    'The AI service is temporarily unavailable. Please try again shortly.',
+    'AstroMitra is currently reviewing astrological charts for many seekers. Please ask your question again in a moment.',
     503,
     'ALL_AI_PROVIDERS_FAILED',
     { attemptsCount, failureSummary }
